@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="PVDataAnalyzer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/PVDataAnalyzer</output-path>
+    <root id="archive" name="PVDataAnalyzer.jar">
+      <element id="module-output" name="PVDataAnalyzer" />
+    </root>
+  </artifact>
+</component>
