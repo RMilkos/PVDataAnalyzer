@@ -19,32 +19,31 @@ import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Date;
 import java.util.Scanner;
+
 
 public class Controller {
 
     @FXML LineChart<String,Double> pchart, tchart, ichart;
     @FXML private BarChart<String,Double> echart;
     @FXML private TextArea resultArea;
-    @FXML private TextField fromValue, toValue;
+    @FXML private TextField fromValue, toValue, modifierField;
     @FXML CheckBox toggleChart;
+    @FXML Button modifierButton;
 
     File file;
     Scanner work_sheet;
     String FieldDelimiter = ";|/";
     FileChooser chooser = new FileChooser();
-    long[] rowsNumber = new long[4];
+    double[] modifier = {1, 1, 1, 1};
     int fileCount = 0, antiOverlap = 0;
     String[] paths = new String[4];
     String[] name = new String[4];
+    Stage modifierStage;
 
     @FXML
-    public void chooseClick(ActionEvent e)
-    {
+    public void chooseClick(ActionEvent e) throws IOException {
         if (antiOverlap > 0 && toggleChart.isSelected())
         {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -66,14 +65,7 @@ public class Controller {
                 new FileChooser.ExtensionFilter("CSV Files", "*.csv")
         );
         file = chooser.showOpenDialog(null);
-        Path path = Paths.get(file.getPath());
         paths[fileCount] = file.getPath();
-        try
-        {
-            rowsNumber[fileCount] = Files.lines(path).count();
-        } catch (IOException eIO) {
-            eIO.printStackTrace();
-        }
         double prevValue = 0;
         if(!(toggleChart.isSelected()) || fileCount == 4)
         {
@@ -85,6 +77,15 @@ public class Controller {
         if (fileCount == 0)
             resultArea.setText("");
         try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("modifier.fxml"));
+            loader.setController(this);
+            Parent root;
+            root = loader.load();
+            modifierStage = new Stage();
+            modifierStage.setTitle("Modifier");
+            modifierStage.setScene(new Scene(root, 290, 75));
+            modifierStage.setResizable(false);
+            modifierStage.showAndWait();
             name[fileCount] = file.getName().substring(0, file.getName().lastIndexOf("."));
             work_sheet = new Scanner(file);
             work_sheet.nextLine();
@@ -95,7 +96,7 @@ public class Controller {
                 double C = Double.parseDouble(data[3].replaceAll(",","."));
                 double D = Double.parseDouble(data[4].replaceAll(",","."));
 
-                power.getData().add(new XYChart.Data(data[1], B));
+                power.getData().add(new XYChart.Data(data[1], B/modifier[fileCount]));
                 irr.getData().add(new XYChart.Data(data[1], C));
                 temp.getData().add(new XYChart.Data(data[1], D));
 
@@ -134,6 +135,7 @@ public class Controller {
                     alert.showAndWait();
                     toggleChart.setSelected(false);
             }
+            antiOverlap = 0;
         }
         catch(IOException eIO) {
             eIO.printStackTrace();
@@ -144,14 +146,43 @@ public class Controller {
     }
     @FXML
     public void closeClick(ActionEvent e) {
+        if (fileCount == 0)
+        {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Information Dialog");
+            alert.setHeaderText(null);
+            alert.setContentText("No file chosen!");
+            alert.showAndWait();
+            return;
+        }
+        if (fromValue.getText().trim().equals("") || toValue.getText().trim().equals(""))
+        {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Information Dialog");
+            alert.setHeaderText(null);
+            alert.setContentText("Fields must be filled.");
+            alert.showAndWait();
+            return;
+        }
         int closeCount = 0;
         antiOverlap++;
         String f = fromValue.getText();
         String t = toValue.getText();
+        String[] closeCompf = f.split(":");
+        String[] closeCompt = t.split(":");
+        if(Integer.parseInt(closeCompf[0]) > Integer.parseInt(closeCompt[0]) || (Integer.parseInt(closeCompf[0]) == Integer.parseInt(closeCompt[0]) && Integer.parseInt(closeCompf[1]) > Integer.parseInt(closeCompt[1])))
+        {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Information Dialog");
+            alert.setHeaderText(null);
+            alert.setContentText("Value 'from' must be less than value 'to'.");
+            alert.showAndWait();
+            return;
+        }
         pchart.getData().clear();
         tchart.getData().clear();
         ichart.getData().clear();
-        while(closeCount<fileCount) {
+        while(closeCount < fileCount) {
             XYChart.Series closepower = new XYChart.Series();
             XYChart.Series closetemp = new XYChart.Series();
             XYChart.Series closeirr = new XYChart.Series();
@@ -161,7 +192,7 @@ public class Controller {
             } catch (FileNotFoundException eFNF) {
                 eFNF.printStackTrace();
             }
-            work_sheet.next();
+            work_sheet.nextLine();
             String checkDate = " ";
             String firstCloseHour = "";
             double firstCloseB = 0, firstCloseC = 0, firstCloseD = 0;
@@ -172,7 +203,7 @@ public class Controller {
                     firstCloseHour = data[1];
                     firstCloseB = Double.parseDouble(data[2].replaceAll(",", "."));
                     firstCloseC = Double.parseDouble(data[3].replaceAll(",", "."));
-                    firstCloseB = Double.parseDouble(data[4].replaceAll(",", "."));
+                    firstCloseD = Double.parseDouble(data[4].replaceAll(",", "."));
                 }
                 closepower.getData().add(new XYChart.Data(firstCloseHour, firstCloseB));
                 closetemp.getData().add(new XYChart.Data(firstCloseHour, firstCloseC));
@@ -307,5 +338,32 @@ public class Controller {
         alert.setHeaderText(null);
         alert.setContentText("Snapshot saved");
         alert.showAndWait();
+    }
+    public void modifierClick(ActionEvent e) {
+        if (modifierField.getText().trim().equals(""))
+        {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Information Dialog");
+            alert.setHeaderText(null);
+            alert.setContentText("Please write a value of surface.");
+            alert.showAndWait();
+            return;
+        }
+
+        //
+        //Add value not double check
+        //
+
+        if (Double.parseDouble(modifierField.getText()) <= 0)
+        {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Information Dialog");
+            alert.setHeaderText(null);
+            alert.setContentText("Surface cannot be 0 or less!");
+            alert.showAndWait();
+            return;
+        }
+        modifier[fileCount] = Double.parseDouble(modifierField.getText());
+        modifierStage.close();
     }
 }
