@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<GridPane alignment="center" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+<GridPane alignment="center" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pvda.MainWindow">
     <columnConstraints>
         <ColumnConstraints />
     </columnConstraints>
@@ -137,7 +137,7 @@
                                 <CategoryAxis fx:id="px" disable="true" prefWidth="649.0" side="BOTTOM" tickLabelGap="5.0" tickLabelRotation="-45" tickLabelsVisible="true" tickMarkVisible="false" />
                             </xAxis>
                             <yAxis>
-                                <NumberAxis forceZeroInRange="false" label="Power output [W]" prefWidth="50.0" side="LEFT" />
+                                <NumberAxis fx:id="powery" forceZeroInRange="false" label="Power output [W]" prefWidth="50.0" side="LEFT" />
                             </yAxis>
                      <VBox.margin>
                         <Insets top="5.0" />
